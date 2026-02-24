@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { GameSettings } from '../../utils/questionGenerator';
 import type { Operator } from '../../utils/evaluateExpression';
 import styles from './SettingsPanel.module.scss';
@@ -8,14 +9,16 @@ interface SettingsPanelProps {
   onStart: () => void;
 }
 
-const methods: { label: string; value: Operator }[] = [
-  { label: 'Plus', value: 'plus' },
-  { label: 'Subtract', value: 'subtract' },
-  { label: 'Multiply', value: 'multiply' },
-  { label: 'Divide', value: 'divide' },
+const methods: { key: string; value: Operator }[] = [
+  { key: 'plus', value: 'plus' },
+  { key: 'subtract', value: 'subtract' },
+  { key: 'multiply', value: 'multiply' },
+  { key: 'divide', value: 'divide' },
 ];
 
 const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
+  const { t } = useTranslation();
+
   const updateNumber = (key: keyof Omit<GameSettings, 'methods' | 'targetSelectionMode'>, value: number) => {
     onChange({ ...settings, [key]: value });
   };
@@ -28,7 +31,7 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
 
   return (
     <section className={styles.settings}>
-      <h2>Game Settings</h2>
+      <h2>{t('settings.title')}</h2>
       <div className={styles.methods}>
         {methods.map((method) => (
           <label key={method.value}>
@@ -37,17 +40,17 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
               checked={settings.methods.includes(method.value)}
               onChange={() => toggleMethod(method.value)}
             />
-            {method.label}
+            {t(`settings.methods.${method.key}`)}
           </label>
         ))}
       </div>
       <div className={styles.grid}>
         <label>
-          Steps
+          {t('settings.steps')}
           <input type="number" min={1} max={3} value={settings.steps} onChange={(e) => updateNumber('steps', Number(e.target.value))} />
         </label>
         <label>
-          Questions
+          {t('settings.questions')}
           <input
             type="number"
             min={1}
@@ -57,15 +60,15 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
           />
         </label>
         <label>
-          Range Min
+          {t('settings.rangeMin')}
           <input type="number" value={settings.min} onChange={(e) => updateNumber('min', Number(e.target.value))} />
         </label>
         <label>
-          Range Max
+          {t('settings.rangeMax')}
           <input type="number" value={settings.max} onChange={(e) => updateNumber('max', Number(e.target.value))} />
         </label>
         <label>
-          Timeout (s)
+          {t('settings.timeout')}
           <input
             type="number"
             min={1}
@@ -74,18 +77,18 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
           />
         </label>
         <label>
-          Target selection
+          {t('settings.targetSelection')}
           <select
             value={settings.targetSelectionMode}
             onChange={(e) => onChange({ ...settings, targetSelectionMode: e.target.value as GameSettings['targetSelectionMode'] })}
           >
-            <option value="random">Random</option>
-            <option value="sequential">Sequential</option>
+            <option value="random">{t('settings.random')}</option>
+            <option value="sequential">{t('settings.sequential')}</option>
           </select>
         </label>
       </div>
       <button type="button" className={styles.start} onClick={onStart}>
-        Start Game
+        {t('settings.start')}
       </button>
     </section>
   );
