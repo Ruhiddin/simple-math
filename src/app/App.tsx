@@ -24,7 +24,7 @@ const defaultSettings: GameSettings = {
   steps: 2,
   questionCount: 5,
   min: 1,
-  max: 9,
+  max: 5,
   timeoutSeconds: 7,
   targetSelectionMode: "random",
 };
