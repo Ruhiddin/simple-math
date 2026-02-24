@@ -9,6 +9,7 @@
   button {
     background: var(--primary);
     color: white;
+    min-height: 48px;
 
     &:disabled {
       cursor: not-allowed;
@@ -19,5 +20,13 @@
 
   small {
     color: var(--muted);
+  }
+}
+
+@media (max-width: 768px) {
+  .controls {
+    padding: var(--space-2);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
   }
 }

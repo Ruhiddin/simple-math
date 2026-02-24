@@ -4,6 +4,7 @@
   box-shadow: var(--shadow);
   padding: var(--space-4);
   min-height: 450px;
+  min-width: 0;
 
   h2 {
     margin-top: 0;
@@ -16,5 +17,18 @@
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: var(--space-2);
+  }
+}
+
+@media (max-width: 768px) {
+  .board {
+    min-height: 320px;
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .board {
+    padding: var(--space-2);
   }
 }

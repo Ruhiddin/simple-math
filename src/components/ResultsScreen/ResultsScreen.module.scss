@@ -1,6 +1,7 @@
 .results {
   display: grid;
   place-items: center;
+  padding: var(--space-3) 0;
 }
 
 .card {
@@ -21,6 +22,7 @@
   button {
     justify-self: center;
     min-width: 160px;
+    min-height: 48px;
     background: var(--primary);
     color: #fff;
   }
@@ -60,6 +62,19 @@
 }
 
 @media (max-width: 680px) {
+  .results {
+    padding: 0;
+  }
+
+  .card {
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+
+    button {
+      width: 100%;
+    }
+  }
+
   .scoreGrid {
     grid-template-columns: 1fr;
   }

@@ -5,7 +5,7 @@
   padding: 0.8rem 1rem;
   min-width: 7rem;
   width: auto;
-  max-width: fit-content;
+  max-width: 100%;
   border: 1px solid #dbe1ff;
   transition:
     opacity 220ms ease,
@@ -16,6 +16,7 @@
   gap: 0.7rem;
   font-size: 2rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .correct {
@@ -31,4 +32,12 @@
 .id {
   color: var(--muted);
   font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .card {
+    font-size: clamp(1.3rem, 6.6vw, 1.7rem);
+    min-width: min(8rem, 100%);
+    padding: 0.7rem 0.85rem;
+  }
 }
