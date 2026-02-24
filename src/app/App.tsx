@@ -46,6 +46,7 @@ const App = () => {
   const roundStepKeyRef = useRef(roundStepKey);
   const targetQuestionIdRef = useRef(targetQuestionId);
   const phaseRef = useRef(phase);
+  const revealedRoundRef = useRef<number | null>(null);
 
   useEffect(() => {
     roundStepKeyRef.current = roundStepKey;
@@ -59,6 +60,10 @@ const App = () => {
     phaseRef.current = phase;
   }, [phase]);
 
+  useEffect(() => {
+    revealedRoundRef.current = null;
+  }, [roundStepKey]);
+
   const targetQuestion = useMemo(
     () => questions.find((question) => question.id === targetQuestionId) ?? null,
     [questions, targetQuestionId],
@@ -67,14 +72,17 @@ const App = () => {
   const phaseState: RoundPhase =
     phase === 'idle' ? 'SETUP' : phase === 'running' ? 'RUNNING' : phase === 'reveal' ? 'REVEAL' : 'DONE';
 
-  const finishQuestion = useCallback((expiredRoundStepKey: number) => {
+  const forceReveal = useCallback((expiredRoundStepKey: number) => {
     if (
       expiredRoundStepKey !== roundStepKeyRef.current ||
+      revealedRoundRef.current === expiredRoundStepKey ||
       targetQuestionIdRef.current === null ||
       phaseRef.current !== 'running'
     ) {
       return;
     }
+
+    revealedRoundRef.current = expiredRoundStepKey;
 
     setPhase('reveal');
     setRevealCorrectId(targetQuestionIdRef.current);
@@ -93,9 +101,15 @@ const App = () => {
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
     isRunning: phaseState === 'RUNNING' && targetQuestion !== null,
-    onExpire: finishQuestion,
+    onExpire: forceReveal,
     roundStepKey,
   });
+
+  useEffect(() => {
+    if (phase === 'running' && remaining <= 0) {
+      forceReveal(roundStepKey);
+    }
+  }, [forceReveal, phase, remaining, roundStepKey]);
 
   const canAdvance = phaseState === 'REVEAL';
 
