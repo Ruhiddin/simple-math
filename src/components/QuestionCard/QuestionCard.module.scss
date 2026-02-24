@@ -7,10 +7,14 @@
   width: auto;
   max-width: fit-content;
   border: 1px solid #dbe1ff;
-  transition: opacity 220ms ease, transform 220ms ease, border-color 220ms ease;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    border-color 220ms ease;
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
+  font-size: 2rem;
 }
 
 .correct {
