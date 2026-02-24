@@ -20,6 +20,16 @@
   color: #991b1b;
 }
 
+.headerActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.homeButton {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 220px minmax(740px, 1fr) 220px;
