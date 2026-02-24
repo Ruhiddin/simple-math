@@ -3,13 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 interface UseCountdownParams {
   duration: number;
   isRunning: boolean;
-  onComplete: () => void;
+  onExpire?: () => void;
   resetKey: string;
 }
 
-export const useCountdown = ({ duration, isRunning, onComplete, resetKey }: UseCountdownParams) => {
+export const useCountdown = ({ duration, isRunning, onExpire, resetKey }: UseCountdownParams) => {
   const [remaining, setRemaining] = useState(duration);
   const completedRef = useRef(false);
+  const onExpireRef = useRef(onExpire);
+
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   useEffect(() => {
     setRemaining(duration);
@@ -26,7 +31,7 @@ export const useCountdown = ({ duration, isRunning, onComplete, resetKey }: UseC
         if (current <= 1) {
           if (!completedRef.current) {
             completedRef.current = true;
-            onComplete();
+            onExpireRef.current?.();
           }
           clearInterval(timer);
           return 0;
@@ -37,7 +42,7 @@ export const useCountdown = ({ duration, isRunning, onComplete, resetKey }: UseC
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning, onComplete]);
+  }, [isRunning]);
 
   return remaining;
 };
