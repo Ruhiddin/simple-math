@@ -5,11 +5,13 @@ import QuestionBoard from '../components/QuestionBoard/QuestionBoard';
 import TimerPanel from '../components/TimerPanel/TimerPanel';
 import AnswerPanel from '../components/AnswerPanel/AnswerPanel';
 import NextControls from '../components/NextControls/NextControls';
+import ResultsScreen from '../components/ResultsScreen/ResultsScreen';
 import { useCountdown } from '../hooks/useCountdown';
 import { generateQuestions, type GameSettings, type GeneratedQuestion } from '../utils/questionGenerator';
 import styles from './App.module.scss';
 
-type Phase = 'idle' | 'running' | 'reveal' | 'done';
+type Mode = 'SETUP' | 'PLAY' | 'RESULTS';
+type PlayPhase = 'running' | 'reveal';
 
 const defaultSettings: GameSettings = {
   methods: ['plus', 'subtract', 'multiply', 'divide'],
@@ -37,7 +39,8 @@ const pickNextTarget = (items: GeneratedQuestion[], mode: GameSettings['targetSe
 const App = () => {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
-  const [phase, setPhase] = useState<Phase>('idle');
+  const [mode, setMode] = useState<Mode>('SETUP');
+  const [playPhase, setPlayPhase] = useState<PlayPhase>('running');
   const [targetQuestionId, setTargetQuestionId] = useState<number | null>(null);
   const [revealCorrectId, setRevealCorrectId] = useState<number | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
@@ -46,7 +49,8 @@ const App = () => {
   const [revealRoundStepKey, setRevealRoundStepKey] = useState<number | null>(null);
   const roundStepKeyRef = useRef(roundStepKey);
   const targetQuestionIdRef = useRef(targetQuestionId);
-  const phaseRef = useRef(phase);
+  const modeRef = useRef(mode);
+  const playPhaseRef = useRef(playPhase);
   const revealedRoundRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -58,8 +62,12 @@ const App = () => {
   }, [targetQuestionId]);
 
   useEffect(() => {
-    phaseRef.current = phase;
-  }, [phase]);
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    playPhaseRef.current = playPhase;
+  }, [playPhase]);
 
   useEffect(() => {
     revealedRoundRef.current = null;
@@ -75,14 +83,15 @@ const App = () => {
       expiredRoundStepKey !== roundStepKeyRef.current ||
       revealedRoundRef.current === expiredRoundStepKey ||
       targetQuestionIdRef.current === null ||
-      phaseRef.current !== 'running'
+      modeRef.current !== 'PLAY' ||
+      playPhaseRef.current !== 'running'
     ) {
       return;
     }
 
     revealedRoundRef.current = expiredRoundStepKey;
 
-    setPhase('reveal');
+    setPlayPhase('reveal');
     setRevealRoundStepKey(expiredRoundStepKey);
     setRevealCorrectId(targetQuestionIdRef.current);
     setQuestions((items) =>
@@ -99,7 +108,7 @@ const App = () => {
 
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
-    isRunning: phase === 'running' && targetQuestion !== null,
+    isRunning: mode === 'PLAY' && playPhase === 'running' && targetQuestion !== null,
     onExpire: forceReveal,
     roundStepKey,
   });
@@ -108,18 +117,19 @@ const App = () => {
     setRemainingSeconds(remaining);
   }, [remaining]);
 
-  const canAdvance = phase === 'reveal';
+  const canAdvance = mode === 'PLAY' && playPhase === 'reveal';
   const visibleRevealCorrectId =
-    phase === 'reveal' && revealRoundStepKey === roundStepKey ? revealCorrectId : null;
+    mode === 'PLAY' && playPhase === 'reveal' && revealRoundStepKey === roundStepKey ? revealCorrectId : null;
 
-  const resetGame = useCallback(() => {
-    setPhase('idle');
+  const resetGameSession = useCallback(() => {
+    setMode('SETUP');
     setQuestions([]);
     setTargetQuestionId(null);
     setRevealCorrectId(null);
     setRevealRoundStepKey(null);
     setRemainingSeconds(settings.timeoutSeconds);
     setRoundStepKey(0);
+    setPlayPhase('running');
   }, [settings.timeoutSeconds]);
 
   const handleStart = () => {
@@ -140,30 +150,37 @@ const App = () => {
     setRevealRoundStepKey(null);
     setRemainingSeconds(normalized.timeoutSeconds);
     setRoundStepKey((value) => value + 1);
-    setPhase(nextTargetId === null ? 'done' : 'running');
+    if (nextTargetId === null) {
+      setMode('RESULTS');
+      return;
+    }
+
+    setMode('PLAY');
+    setPlayPhase('running');
   };
 
   const handleNext = useCallback(() => {
-    if (phase !== 'reveal') {
+    if (mode !== 'PLAY' || playPhase !== 'reveal') {
       return;
     }
 
     const nextTargetId = pickNextTarget(questions, settings.targetSelectionMode);
     if (nextTargetId === null) {
-      setPhase('done');
+      setMode('RESULTS');
       setTargetQuestionId(null);
       setRevealCorrectId(null);
       setRevealRoundStepKey(null);
+      setPlayPhase('running');
       return;
     }
 
-    setPhase('running');
+    setPlayPhase('running');
     setTargetQuestionId(nextTargetId);
     setRevealCorrectId(null);
     setRevealRoundStepKey(null);
     setRemainingSeconds(settings.timeoutSeconds);
     setRoundStepKey((value) => value + 1);
-  }, [phase, questions, settings.targetSelectionMode, settings.timeoutSeconds]);
+  }, [mode, playPhase, questions, settings.targetSelectionMode, settings.timeoutSeconds]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -189,8 +206,8 @@ const App = () => {
       <header className={styles.header}>
         <h1>Arithmetic Arena</h1>
         <div className={styles.headerActions}>
-          {(phase === 'running' || phase === 'reveal') && (
-            <button type="button" className={styles.homeButton} onClick={resetGame}>
+          {(mode === 'PLAY' || mode === 'RESULTS') && (
+            <button type="button" className={styles.homeButton} onClick={resetGameSession}>
               Home
             </button>
           )}
@@ -210,15 +227,13 @@ const App = () => {
         />
 
         <main className={styles.main}>
-          {(phase === 'idle' || phase === 'done') && (
-            <SettingsPanel settings={settings} onChange={setSettings} onStart={handleStart} />
-          )}
+          {mode === 'SETUP' && <SettingsPanel settings={settings} onChange={setSettings} onStart={handleStart} />}
 
-          {phase !== 'idle' && (
+          {mode === 'PLAY' && (
             <>
               <QuestionBoard questions={questions} revealCorrectId={visibleRevealCorrectId} />
               <div className={styles.infoRow}>
-                <TimerPanel remaining={remainingSeconds} running={phase === 'running'} />
+                <TimerPanel remaining={remainingSeconds} running={playPhase === 'running'} />
                 <AnswerPanel
                   answer={targetQuestion?.answer ?? null}
                   revealQuestionNumber={
@@ -227,9 +242,13 @@ const App = () => {
                       : (questions.find((question) => question.id === visibleRevealCorrectId)?.displayIndex ?? null)
                   }
                 />
-                <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={phase === 'done'} onRestart={resetGame} />
+                <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={false} onRestart={resetGameSession} />
               </div>
             </>
+          )}
+
+          {mode === 'RESULTS' && (
+            <ResultsScreen player1Score={scores.player1} player2Score={scores.player2} onHome={resetGameSession} />
           )}
         </main>
 
