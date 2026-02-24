@@ -9,6 +9,7 @@ interface UseCountdownParams {
 
 export const useCountdown = ({ duration, isRunning, onExpire, roundStepKey }: UseCountdownParams) => {
   const [remaining, setRemaining] = useState(duration);
+  const remainingRef = useRef(duration);
   const expiredRoundRef = useRef<number | null>(null);
   const onExpireRef = useRef(onExpire);
 
@@ -17,6 +18,7 @@ export const useCountdown = ({ duration, isRunning, onExpire, roundStepKey }: Us
   }, [onExpire]);
 
   useEffect(() => {
+    remainingRef.current = duration;
     setRemaining(duration);
     expiredRoundRef.current = null;
   }, [duration, roundStepKey]);
@@ -27,18 +29,17 @@ export const useCountdown = ({ duration, isRunning, onExpire, roundStepKey }: Us
     }
 
     const timer = window.setInterval(() => {
-      setRemaining((current) => {
-        if (current <= 1) {
-          if (expiredRoundRef.current !== roundStepKey) {
-            expiredRoundRef.current = roundStepKey;
-            onExpireRef.current?.(roundStepKey);
-          }
-          window.clearInterval(timer);
-          return 0;
-        }
+      const next = Math.max(remainingRef.current - 1, 0);
+      remainingRef.current = next;
+      setRemaining(next);
 
-        return current - 1;
-      });
+      if (next <= 0) {
+        if (expiredRoundRef.current !== roundStepKey) {
+          expiredRoundRef.current = roundStepKey;
+          onExpireRef.current?.(roundStepKey);
+        }
+        window.clearInterval(timer);
+      }
     }, 1000);
 
     return () => window.clearInterval(timer);
