@@ -1,0 +1,66 @@
+.results {
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: var(--space-3);
+  text-align: center;
+
+  h2 {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  button {
+    justify-self: center;
+    min-width: 160px;
+    background: var(--primary);
+    color: #fff;
+  }
+}
+
+.kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+
+  article {
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    background: var(--surface-alt);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+
+  p {
+    margin: var(--space-2) 0 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+}
+
+@media (max-width: 680px) {
+  .scoreGrid {
+    grid-template-columns: 1fr;
+  }
+}
