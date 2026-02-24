@@ -1,10 +1,12 @@
 import { evaluateExpression, type Operator } from './evaluateExpression';
 import { randomFromArray, randomInt } from './rng';
 
-export type QuestionStatus = 'pending' | 'resolved';
+export type QuestionStatus = 'ACTIVE' | 'RESOLVED';
+export type TargetSelectionMode = 'random' | 'sequential';
 
 export interface GeneratedQuestion {
   id: number;
+  displayIndex: number;
   numbers: number[];
   operators: Operator[];
   answer: number;
@@ -18,6 +20,7 @@ export interface GameSettings {
   min: number;
   max: number;
   timeoutSeconds: number;
+  targetSelectionMode: TargetSelectionMode;
 }
 
 const maxAttempts = 100;
@@ -59,10 +62,11 @@ export const generateQuestions = (settings: GameSettings): GeneratedQuestion[] =
 
     questions.push({
       id: questionId,
+      displayIndex: questionId,
       numbers,
       operators,
       answer: evaluateExpression(numbers, operators),
-      status: 'pending',
+      status: 'ACTIVE',
     });
   }
 

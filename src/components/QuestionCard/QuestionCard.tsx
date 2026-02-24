@@ -4,12 +4,12 @@ import styles from './QuestionCard.module.scss';
 
 interface QuestionCardProps {
   question: GeneratedQuestion;
-  isActive: boolean;
+  isRevealedCorrect: boolean;
 }
 
-const QuestionCard = ({ question, isActive }: QuestionCardProps) => (
-  <li className={`${styles.card} ${isActive ? styles.active : ''} ${question.status === 'resolved' ? styles.resolved : ''}`}>
-    <span className={styles.id}>#{question.id}</span>
+const QuestionCard = ({ question, isRevealedCorrect }: QuestionCardProps) => (
+  <li className={`${styles.card} ${isRevealedCorrect ? styles.correct : ''} ${question.status === 'RESOLVED' ? styles.resolved : ''}`}>
+    <span className={styles.id}>#{question.displayIndex}</span>
     <span>{formatExpression(question.numbers, question.operators)}</span>
   </li>
 );

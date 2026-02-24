@@ -36,7 +36,8 @@
     gap: 0.35rem;
   }
 
-  input {
+  input,
+  select {
     border: 1px solid #c7cde8;
     border-radius: var(--radius-sm);
     padding: 0.45rem 0.55rem;
