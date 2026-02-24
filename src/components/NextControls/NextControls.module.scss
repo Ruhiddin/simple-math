@@ -1,0 +1,23 @@
+.controls {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-1);
+
+  button {
+    background: var(--primary);
+    color: white;
+
+    &:disabled {
+      cursor: not-allowed;
+      background: #c7cae8;
+      transform: none;
+    }
+  }
+
+  small {
+    color: var(--muted);
+  }
+}

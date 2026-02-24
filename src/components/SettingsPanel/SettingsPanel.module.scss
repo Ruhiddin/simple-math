@@ -1,0 +1,50 @@
+.settings {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: var(--space-3);
+  }
+}
+
+.methods {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+
+  label {
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  label {
+    color: var(--muted);
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  input {
+    border: 1px solid #c7cde8;
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.55rem;
+  }
+}
+
+.start {
+  margin-top: var(--space-4);
+  background: var(--primary);
+  color: white;
+}

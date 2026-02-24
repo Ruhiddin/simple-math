@@ -1,0 +1,33 @@
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+  min-height: 280px;
+
+  h3 {
+    margin: 0;
+    color: var(--muted);
+    font-weight: 600;
+  }
+}
+
+.score {
+  font-size: 3rem;
+  margin: var(--space-2) 0 var(--space-4);
+  font-weight: 800;
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-2);
+
+  button {
+    background: var(--surface-alt);
+  }
+}
+
+.reset {
+  background: #fee2e2 !important;
+  color: #991b1b;
+}
