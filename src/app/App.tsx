@@ -10,7 +10,6 @@ import { generateQuestions, type GameSettings, type GeneratedQuestion } from '..
 import styles from './App.module.scss';
 
 type Phase = 'idle' | 'running' | 'reveal' | 'done';
-type RoundPhase = 'SETUP' | 'RUNNING' | 'REVEAL' | 'DONE';
 
 const defaultSettings: GameSettings = {
   methods: ['plus', 'subtract', 'multiply', 'divide'],
@@ -43,6 +42,8 @@ const App = () => {
   const [revealCorrectId, setRevealCorrectId] = useState<number | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
   const [roundStepKey, setRoundStepKey] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState(defaultSettings.timeoutSeconds);
+  const [revealRoundStepKey, setRevealRoundStepKey] = useState<number | null>(null);
   const roundStepKeyRef = useRef(roundStepKey);
   const targetQuestionIdRef = useRef(targetQuestionId);
   const phaseRef = useRef(phase);
@@ -69,9 +70,6 @@ const App = () => {
     [questions, targetQuestionId],
   );
 
-  const phaseState: RoundPhase =
-    phase === 'idle' ? 'SETUP' : phase === 'running' ? 'RUNNING' : phase === 'reveal' ? 'REVEAL' : 'DONE';
-
   const forceReveal = useCallback((expiredRoundStepKey: number) => {
     if (
       expiredRoundStepKey !== roundStepKeyRef.current ||
@@ -85,6 +83,7 @@ const App = () => {
     revealedRoundRef.current = expiredRoundStepKey;
 
     setPhase('reveal');
+    setRevealRoundStepKey(expiredRoundStepKey);
     setRevealCorrectId(targetQuestionIdRef.current);
     setQuestions((items) =>
       items.map((question) =>
@@ -100,26 +99,28 @@ const App = () => {
 
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
-    isRunning: phaseState === 'RUNNING' && targetQuestion !== null,
+    isRunning: phase === 'running' && targetQuestion !== null,
     onExpire: forceReveal,
     roundStepKey,
   });
 
   useEffect(() => {
-    if (phase === 'running' && remaining <= 0) {
-      forceReveal(roundStepKey);
-    }
-  }, [forceReveal, phase, remaining, roundStepKey]);
+    setRemainingSeconds(remaining);
+  }, [remaining]);
 
-  const canAdvance = phaseState === 'REVEAL';
+  const canAdvance = phase === 'reveal';
+  const visibleRevealCorrectId =
+    phase === 'reveal' && revealRoundStepKey === roundStepKey ? revealCorrectId : null;
 
   const resetGame = useCallback(() => {
     setPhase('idle');
     setQuestions([]);
     setTargetQuestionId(null);
     setRevealCorrectId(null);
+    setRevealRoundStepKey(null);
+    setRemainingSeconds(settings.timeoutSeconds);
     setRoundStepKey(0);
-  }, []);
+  }, [settings.timeoutSeconds]);
 
   const handleStart = () => {
     const normalized: GameSettings = {
@@ -136,6 +137,8 @@ const App = () => {
     setQuestions(generated);
     setTargetQuestionId(nextTargetId);
     setRevealCorrectId(null);
+    setRevealRoundStepKey(null);
+    setRemainingSeconds(normalized.timeoutSeconds);
     setRoundStepKey((value) => value + 1);
     setPhase(nextTargetId === null ? 'done' : 'running');
   };
@@ -150,14 +153,17 @@ const App = () => {
       setPhase('done');
       setTargetQuestionId(null);
       setRevealCorrectId(null);
+      setRevealRoundStepKey(null);
       return;
     }
 
+    setPhase('running');
     setTargetQuestionId(nextTargetId);
     setRevealCorrectId(null);
+    setRevealRoundStepKey(null);
+    setRemainingSeconds(settings.timeoutSeconds);
     setRoundStepKey((value) => value + 1);
-    setPhase('running');
-  }, [phase, questions, settings.targetSelectionMode]);
+  }, [phase, questions, settings.targetSelectionMode, settings.timeoutSeconds]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -210,15 +216,15 @@ const App = () => {
 
           {phase !== 'idle' && (
             <>
-              <QuestionBoard questions={questions} revealCorrectId={revealCorrectId} />
+              <QuestionBoard questions={questions} revealCorrectId={visibleRevealCorrectId} />
               <div className={styles.infoRow}>
-                <TimerPanel remaining={remaining} running={phaseState === 'RUNNING'} />
+                <TimerPanel remaining={remainingSeconds} running={phase === 'running'} />
                 <AnswerPanel
                   answer={targetQuestion?.answer ?? null}
                   revealQuestionNumber={
-                    revealCorrectId === null
+                    visibleRevealCorrectId === null
                       ? null
-                      : (questions.find((question) => question.id === revealCorrectId)?.displayIndex ?? null)
+                      : (questions.find((question) => question.id === visibleRevealCorrectId)?.displayIndex ?? null)
                   }
                 />
                 <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={phase === 'done'} onRestart={resetGame} />
