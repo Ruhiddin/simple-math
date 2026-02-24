@@ -9,15 +9,14 @@
   gap: 0.7rem;
 }
 
-.active {
-  border-color: var(--primary);
+.correct {
+  border-color: #16a34a;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.18);
+  box-shadow: 0 10px 20px rgba(22, 163, 74, 0.18);
 }
 
 .resolved {
-  opacity: 0;
-  transform: translateX(12px);
+  opacity: 0.65;
 }
 
 .id {

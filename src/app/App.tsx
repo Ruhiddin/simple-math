@@ -18,37 +18,60 @@ const defaultSettings: GameSettings = {
   min: 1,
   max: 12,
   timeoutSeconds: 7,
+  targetSelectionMode: 'random',
+};
+
+const pickNextTarget = (items: GeneratedQuestion[], mode: GameSettings['targetSelectionMode']) => {
+  const remaining = items.filter((question) => question.status === 'ACTIVE');
+  if (remaining.length === 0) {
+    return null;
+  }
+
+  if (mode === 'sequential') {
+    return remaining.sort((a, b) => a.displayIndex - b.displayIndex)[0]?.id ?? null;
+  }
+
+  return remaining[Math.floor(Math.random() * remaining.length)]?.id ?? null;
 };
 
 const App = () => {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
   const [gameId, setGameId] = useState(0);
+  const [targetQuestionId, setTargetQuestionId] = useState<number | null>(null);
+  const [revealCorrectId, setRevealCorrectId] = useState<number | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
 
-  const currentQuestion = questions[currentIndex] ?? null;
+  const targetQuestion = useMemo(
+    () => questions.find((question) => question.id === targetQuestionId) ?? null,
+    [questions, targetQuestionId],
+  );
 
   const finishQuestion = useCallback(() => {
+    if (targetQuestionId === null) {
+      return;
+    }
+
     setPhase('reveal');
+    setRevealCorrectId(targetQuestionId);
     setQuestions((items) =>
-      items.map((question, index) =>
-        index === currentIndex
+      items.map((question) =>
+        question.id === targetQuestionId
           ? {
               ...question,
-              status: 'resolved',
+              status: 'RESOLVED',
             }
           : question,
       ),
     );
-  }, [currentIndex]);
+  }, [targetQuestionId]);
 
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
-    isRunning: phase === 'running' && currentQuestion !== null,
+    isRunning: phase === 'running' && targetQuestion !== null,
     onComplete: finishQuestion,
-    resetKey: `${gameId}-${currentIndex}`,
+    resetKey: `${gameId}-${targetQuestionId ?? 'none'}`,
   });
 
   const canAdvance = phase === 'reveal';
@@ -62,11 +85,14 @@ const App = () => {
     };
 
     const generated = generateQuestions(normalized);
+    const nextTargetId = pickNextTarget(generated, normalized.targetSelectionMode);
+
     setSettings(normalized);
     setQuestions(generated);
-    setCurrentIndex(0);
+    setTargetQuestionId(nextTargetId);
+    setRevealCorrectId(null);
     setGameId((value) => value + 1);
-    setPhase('running');
+    setPhase(nextTargetId === null ? 'done' : 'running');
   };
 
   const handleNext = useCallback(() => {
@@ -74,15 +100,18 @@ const App = () => {
       return;
     }
 
-    const nextIndex = currentIndex + 1;
-    if (nextIndex >= questions.length) {
+    const nextTargetId = pickNextTarget(questions, settings.targetSelectionMode);
+    if (nextTargetId === null) {
       setPhase('done');
+      setTargetQuestionId(null);
+      setRevealCorrectId(null);
       return;
     }
 
-    setCurrentIndex(nextIndex);
+    setTargetQuestionId(nextTargetId);
+    setRevealCorrectId(null);
     setPhase('running');
-  }, [currentIndex, phase, questions.length]);
+  }, [phase, questions, settings.targetSelectionMode]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -102,8 +131,6 @@ const App = () => {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [canAdvance, handleNext]);
-
-  const answer = useMemo(() => currentQuestion?.answer ?? null, [currentQuestion]);
 
   return (
     <div className={styles.app}>
@@ -130,10 +157,17 @@ const App = () => {
 
           {phase !== 'idle' && (
             <>
-              <QuestionBoard questions={questions.filter((question) => question.status !== 'resolved')} currentQuestionId={currentQuestion?.id ?? null} />
+              <QuestionBoard questions={questions} revealCorrectId={revealCorrectId} />
               <div className={styles.infoRow}>
                 <TimerPanel remaining={remaining} running={phase === 'running'} />
-                <AnswerPanel answer={answer} reveal={phase === 'reveal' || phase === 'done'} />
+                <AnswerPanel
+                  answer={targetQuestion?.answer ?? null}
+                  revealQuestionNumber={
+                    revealCorrectId === null
+                      ? null
+                      : (questions.find((question) => question.id === revealCorrectId)?.displayIndex ?? null)
+                  }
+                />
                 <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={phase === 'done'} onRestart={() => setPhase('idle')} />
               </div>
             </>

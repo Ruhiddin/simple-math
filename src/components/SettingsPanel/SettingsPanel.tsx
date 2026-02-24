@@ -16,7 +16,7 @@ const methods: { label: string; value: Operator }[] = [
 ];
 
 const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
-  const updateNumber = (key: keyof Omit<GameSettings, 'methods'>, value: number) => {
+  const updateNumber = (key: keyof Omit<GameSettings, 'methods' | 'targetSelectionMode'>, value: number) => {
     onChange({ ...settings, [key]: value });
   };
 
@@ -72,6 +72,16 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
             value={settings.timeoutSeconds}
             onChange={(e) => updateNumber('timeoutSeconds', Number(e.target.value))}
           />
+        </label>
+        <label>
+          Target selection
+          <select
+            value={settings.targetSelectionMode}
+            onChange={(e) => onChange({ ...settings, targetSelectionMode: e.target.value as GameSettings['targetSelectionMode'] })}
+          >
+            <option value="random">Random</option>
+            <option value="sequential">Sequential</option>
+          </select>
         </label>
       </div>
       <button type="button" className={styles.start} onClick={onStart}>
