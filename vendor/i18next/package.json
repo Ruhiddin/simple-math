@@ -1,0 +1,7 @@
+{
+  "name": "i18next",
+  "version": "24.2.2",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts"
+}
