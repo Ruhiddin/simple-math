@@ -288,11 +288,7 @@ const App = () => {
           )}
 
           {mode === "PLAY" && (
-            <>
-              <QuestionBoard
-                questions={questions}
-                revealCorrectId={visibleRevealCorrectId}
-              />
+            <section className={styles.playArea}>
               <div className={styles.infoRow}>
                 <TimerPanel
                   remaining={remainingSeconds}
@@ -308,6 +304,14 @@ const App = () => {
                         )?.displayIndex ?? null)
                   }
                 />
+              </div>
+
+              <QuestionBoard
+                questions={questions}
+                revealCorrectId={visibleRevealCorrectId}
+              />
+
+              <div className={styles.nextRow}>
                 <NextControls
                   canAdvance={canAdvance}
                   onNext={handleNext}
@@ -315,7 +319,7 @@ const App = () => {
                   onRestart={resetGameSession}
                 />
               </div>
-            </>
+            </section>
           )}
 
           {mode === "RESULTS" && (

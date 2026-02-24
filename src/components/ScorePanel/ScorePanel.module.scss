@@ -4,6 +4,7 @@
   box-shadow: var(--shadow);
   padding: var(--space-4);
   min-height: 280px;
+  min-width: 0;
 
   h3 {
     margin: 0;
@@ -24,10 +25,37 @@
 
   button {
     background: var(--surface-alt);
+    min-height: 44px;
   }
 }
 
 .reset {
   background: #fee2e2 !important;
   color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .panel {
+    min-height: auto;
+    padding: var(--space-3);
+
+    h3 {
+      font-size: 0.95rem;
+    }
+  }
+
+  .score {
+    font-size: clamp(1.9rem, 9vw, 2.5rem);
+    margin: var(--space-1) 0 var(--space-2);
+  }
+
+  .controls {
+    gap: var(--space-1);
+  }
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: var(--space-2);
+  }
 }
