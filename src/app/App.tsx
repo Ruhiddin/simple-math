@@ -82,6 +82,14 @@ const App = () => {
 
   const canAdvance = phase === 'reveal';
 
+  const resetGame = useCallback(() => {
+    setPhase('idle');
+    setQuestions([]);
+    setTargetQuestionId(null);
+    setRevealCorrectId(null);
+    setGameId((value) => value + 1);
+  }, []);
+
   const handleStart = () => {
     const normalized: GameSettings = {
       ...settings,
@@ -142,9 +150,16 @@ const App = () => {
     <div className={styles.app}>
       <header className={styles.header}>
         <h1>Arithmetic Arena</h1>
-        <button type="button" className={styles.resetBoth} onClick={() => setScores({ player1: 0, player2: 0 })}>
-          Reset both
-        </button>
+        <div className={styles.headerActions}>
+          {(phase === 'running' || phase === 'reveal') && (
+            <button type="button" className={styles.homeButton} onClick={resetGame}>
+              Home
+            </button>
+          )}
+          <button type="button" className={styles.resetBoth} onClick={() => setScores({ player1: 0, player2: 0 })}>
+            Reset both
+          </button>
+        </div>
       </header>
 
       <div className={styles.layout}>
@@ -174,7 +189,7 @@ const App = () => {
                       : (questions.find((question) => question.id === revealCorrectId)?.displayIndex ?? null)
                   }
                 />
-                <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={phase === 'done'} onRestart={() => setPhase('idle')} />
+                <NextControls canAdvance={canAdvance} onNext={handleNext} gameOver={phase === 'done'} onRestart={resetGame} />
               </div>
             </>
           )}
