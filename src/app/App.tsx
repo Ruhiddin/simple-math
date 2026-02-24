@@ -70,9 +70,15 @@ const App = () => {
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
     isRunning: phase === 'running' && targetQuestion !== null,
-    onComplete: finishQuestion,
+    onExpire: finishQuestion,
     resetKey: `${gameId}-${targetQuestionId ?? 'none'}`,
   });
+
+  useEffect(() => {
+    if (phase === 'running' && remaining === 0) {
+      finishQuestion();
+    }
+  }, [finishQuestion, phase, remaining]);
 
   const canAdvance = phase === 'reveal';
 
