@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import SettingsPanel from "../components/SettingsPanel/SettingsPanel";
 import ScorePanel from "../components/ScorePanel/ScorePanel";
 import QuestionBoard from "../components/QuestionBoard/QuestionBoard";
@@ -6,6 +7,7 @@ import TimerPanel from "../components/TimerPanel/TimerPanel";
 import AnswerPanel from "../components/AnswerPanel/AnswerPanel";
 import NextControls from "../components/NextControls/NextControls";
 import ResultsScreen from "../components/ResultsScreen/ResultsScreen";
+import LanguageSwitcher from "../components/LanguageSwitcher/LanguageSwitcher";
 import { useCountdown } from "../hooks/useCountdown";
 import {
   generateQuestions,
@@ -46,6 +48,7 @@ const pickNextTarget = (
 };
 
 const App = () => {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
   const [mode, setMode] = useState<Mode>("SETUP");
@@ -240,15 +243,16 @@ const App = () => {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <h1>Arithmetic Arena</h1>
+        <h1>{t("app.title")}</h1>
         <div className={styles.headerActions}>
+          <LanguageSwitcher />
           {(mode === "PLAY" || mode === "RESULTS") && (
             <button
               type="button"
               className={styles.homeButton}
               onClick={resetGameSession}
             >
-              Home
+              {t("app.home")}
             </button>
           )}
           <button
@@ -256,14 +260,14 @@ const App = () => {
             className={styles.resetBoth}
             onClick={() => setScores({ player1: 0, player2: 0 })}
           >
-            Reset both
+            {t("app.resetBoth")}
           </button>
         </div>
       </header>
 
       <div className={styles.layout}>
         <ScorePanel
-          label="Player 1"
+          label={t("players.player1")}
           score={scores.player1}
           onIncrement={() =>
             setScores((s) => ({ ...s, player1: s.player1 + 1 }))
@@ -324,7 +328,7 @@ const App = () => {
         </main>
 
         <ScorePanel
-          label="Player 2"
+          label={t("players.player2")}
           score={scores.player2}
           onIncrement={() =>
             setScores((s) => ({ ...s, player2: s.player2 + 1 }))

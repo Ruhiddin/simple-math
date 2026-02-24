@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import styles from './NextControls.module.scss';
 
 interface NextControlsProps {
@@ -8,12 +9,14 @@ interface NextControlsProps {
 }
 
 const NextControls = ({ canAdvance, onNext, gameOver, onRestart }: NextControlsProps) => {
+  const { t } = useTranslation();
+
   if (gameOver) {
     return (
       <section className={styles.controls}>
-        <h3>Game Over</h3>
+        <h3>{t('next.gameOver')}</h3>
         <button type="button" onClick={onRestart}>
-          Restart
+          {t('next.restart')}
         </button>
       </section>
     );
@@ -22,9 +25,9 @@ const NextControls = ({ canAdvance, onNext, gameOver, onRestart }: NextControlsP
   return (
     <section className={styles.controls}>
       <button type="button" disabled={!canAdvance} onClick={onNext}>
-        Next
+        {t('next.next')}
       </button>
-      <small>{canAdvance ? 'Press Space for Next' : 'Wait for timer to reach zero'}</small>
+      <small>{canAdvance ? t('next.pressSpace') : t('next.waitTimer')}</small>
     </section>
   );
 };
