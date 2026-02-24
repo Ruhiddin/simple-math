@@ -10,6 +10,7 @@ import { generateQuestions, type GameSettings, type GeneratedQuestion } from '..
 import styles from './App.module.scss';
 
 type Phase = 'idle' | 'running' | 'reveal' | 'done';
+type RoundPhase = 'SETUP' | 'RUNNING' | 'REVEAL' | 'DONE';
 
 const defaultSettings: GameSettings = {
   methods: ['plus', 'subtract', 'multiply', 'divide'],
@@ -38,18 +39,21 @@ const App = () => {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
   const [phase, setPhase] = useState<Phase>('idle');
-  const [gameId, setGameId] = useState(0);
   const [targetQuestionId, setTargetQuestionId] = useState<number | null>(null);
   const [revealCorrectId, setRevealCorrectId] = useState<number | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
+  const [roundStepKey, setRoundStepKey] = useState(0);
 
   const targetQuestion = useMemo(
     () => questions.find((question) => question.id === targetQuestionId) ?? null,
     [questions, targetQuestionId],
   );
 
-  const finishQuestion = useCallback(() => {
-    if (targetQuestionId === null) {
+  const phaseState: RoundPhase =
+    phase === 'idle' ? 'SETUP' : phase === 'running' ? 'RUNNING' : phase === 'reveal' ? 'REVEAL' : 'DONE';
+
+  const finishQuestion = useCallback((expiredRoundStepKey: number) => {
+    if (expiredRoundStepKey !== roundStepKey || targetQuestionId === null || phaseState !== 'RUNNING') {
       return;
     }
 
@@ -65,29 +69,23 @@ const App = () => {
           : question,
       ),
     );
-  }, [targetQuestionId]);
+  }, [phaseState, roundStepKey, targetQuestionId]);
 
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
-    isRunning: phase === 'running' && targetQuestion !== null,
+    isRunning: phaseState === 'RUNNING' && targetQuestion !== null,
     onExpire: finishQuestion,
-    resetKey: `${gameId}-${targetQuestionId ?? 'none'}`,
+    roundStepKey,
   });
 
-  useEffect(() => {
-    if (phase === 'running' && remaining === 0) {
-      finishQuestion();
-    }
-  }, [finishQuestion, phase, remaining]);
-
-  const canAdvance = phase === 'reveal';
+  const canAdvance = phaseState === 'REVEAL';
 
   const resetGame = useCallback(() => {
     setPhase('idle');
     setQuestions([]);
     setTargetQuestionId(null);
     setRevealCorrectId(null);
-    setGameId((value) => value + 1);
+    setRoundStepKey(0);
   }, []);
 
   const handleStart = () => {
@@ -105,7 +103,7 @@ const App = () => {
     setQuestions(generated);
     setTargetQuestionId(nextTargetId);
     setRevealCorrectId(null);
-    setGameId((value) => value + 1);
+    setRoundStepKey((value) => value + 1);
     setPhase(nextTargetId === null ? 'done' : 'running');
   };
 
@@ -124,6 +122,7 @@ const App = () => {
 
     setTargetQuestionId(nextTargetId);
     setRevealCorrectId(null);
+    setRoundStepKey((value) => value + 1);
     setPhase('running');
   }, [phase, questions, settings.targetSelectionMode]);
 
@@ -180,7 +179,7 @@ const App = () => {
             <>
               <QuestionBoard questions={questions} revealCorrectId={revealCorrectId} />
               <div className={styles.infoRow}>
-                <TimerPanel remaining={remaining} running={phase === 'running'} />
+                <TimerPanel remaining={remaining} running={phaseState === 'RUNNING'} />
                 <AnswerPanel
                   answer={targetQuestion?.answer ?? null}
                   revealQuestionNumber={

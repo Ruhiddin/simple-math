@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 interface UseCountdownParams {
   duration: number;
   isRunning: boolean;
-  onExpire?: () => void;
-  resetKey: string;
+  onExpire?: (roundStepKey: number) => void;
+  roundStepKey: number;
 }
 
-export const useCountdown = ({ duration, isRunning, onExpire, resetKey }: UseCountdownParams) => {
+export const useCountdown = ({ duration, isRunning, onExpire, roundStepKey }: UseCountdownParams) => {
   const [remaining, setRemaining] = useState(duration);
-  const completedRef = useRef(false);
+  const expiredRoundRef = useRef<number | null>(null);
   const onExpireRef = useRef(onExpire);
 
   useEffect(() => {
@@ -18,22 +18,22 @@ export const useCountdown = ({ duration, isRunning, onExpire, resetKey }: UseCou
 
   useEffect(() => {
     setRemaining(duration);
-    completedRef.current = false;
-  }, [duration, resetKey]);
+    expiredRoundRef.current = null;
+  }, [duration, roundStepKey]);
 
   useEffect(() => {
     if (!isRunning) {
       return;
     }
 
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setRemaining((current) => {
         if (current <= 1) {
-          if (!completedRef.current) {
-            completedRef.current = true;
-            onExpireRef.current?.();
+          if (expiredRoundRef.current !== roundStepKey) {
+            expiredRoundRef.current = roundStepKey;
+            onExpireRef.current?.(roundStepKey);
           }
-          clearInterval(timer);
+          window.clearInterval(timer);
           return 0;
         }
 
@@ -41,8 +41,8 @@ export const useCountdown = ({ duration, isRunning, onExpire, resetKey }: UseCou
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [isRunning]);
+    return () => window.clearInterval(timer);
+  }, [isRunning, roundStepKey]);
 
   return remaining;
 };
