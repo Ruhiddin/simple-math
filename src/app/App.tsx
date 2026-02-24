@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SettingsPanel from '../components/SettingsPanel/SettingsPanel';
 import ScorePanel from '../components/ScorePanel/ScorePanel';
 import QuestionBoard from '../components/QuestionBoard/QuestionBoard';
@@ -43,6 +43,21 @@ const App = () => {
   const [revealCorrectId, setRevealCorrectId] = useState<number | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
   const [roundStepKey, setRoundStepKey] = useState(0);
+  const roundStepKeyRef = useRef(roundStepKey);
+  const targetQuestionIdRef = useRef(targetQuestionId);
+  const phaseRef = useRef(phase);
+
+  useEffect(() => {
+    roundStepKeyRef.current = roundStepKey;
+  }, [roundStepKey]);
+
+  useEffect(() => {
+    targetQuestionIdRef.current = targetQuestionId;
+  }, [targetQuestionId]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const targetQuestion = useMemo(
     () => questions.find((question) => question.id === targetQuestionId) ?? null,
@@ -53,15 +68,19 @@ const App = () => {
     phase === 'idle' ? 'SETUP' : phase === 'running' ? 'RUNNING' : phase === 'reveal' ? 'REVEAL' : 'DONE';
 
   const finishQuestion = useCallback((expiredRoundStepKey: number) => {
-    if (expiredRoundStepKey !== roundStepKey || targetQuestionId === null || phaseState !== 'RUNNING') {
+    if (
+      expiredRoundStepKey !== roundStepKeyRef.current ||
+      targetQuestionIdRef.current === null ||
+      phaseRef.current !== 'running'
+    ) {
       return;
     }
 
     setPhase('reveal');
-    setRevealCorrectId(targetQuestionId);
+    setRevealCorrectId(targetQuestionIdRef.current);
     setQuestions((items) =>
       items.map((question) =>
-        question.id === targetQuestionId
+        question.id === targetQuestionIdRef.current
           ? {
               ...question,
               status: 'RESOLVED',
@@ -69,7 +88,7 @@ const App = () => {
           : question,
       ),
     );
-  }, [phaseState, roundStepKey, targetQuestionId]);
+  }, []);
 
   const remaining = useCountdown({
     duration: settings.timeoutSeconds,
