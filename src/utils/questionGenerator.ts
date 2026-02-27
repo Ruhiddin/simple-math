@@ -15,7 +15,7 @@ export interface GeneratedQuestion {
 
 export interface GameSettings {
   methods: Operator[];
-  steps: number;
+  actions: number;
   questionCount: number;
   min: number;
   max: number;
@@ -44,7 +44,7 @@ export const generateQuestions = (settings: GameSettings): GeneratedQuestion[] =
     const operators: Operator[] = [];
     const numbers: number[] = [randomInt(settings.min, settings.max)];
 
-    for (let step = 0; step < settings.steps; step += 1) {
+    for (let step = 0; step < settings.actions; step += 1) {
       const operator = randomFromArray(settings.methods);
       operators.push(operator);
 
