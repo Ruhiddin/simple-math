@@ -19,6 +19,8 @@ import styles from "./App.module.scss";
 type Mode = "SETUP" | "PLAY" | "RESULTS";
 type PlayPhase = "running" | "reveal";
 const STORAGE_KEY = "simple-math-settings";
+const ACTIONS_MIN = 1;
+const ACTIONS_MAX = 5;
 
 const defaultSettings: GameSettings = {
   methods: ["plus", "subtract", "multiply", "divide"],
@@ -37,15 +39,20 @@ const validMethods: GameSettings["methods"] = [
   "divide",
 ];
 
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value);
+const asFiniteNumber = (value: unknown): number | null => {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
 
 const validateStoredSettings = (value: unknown): GameSettings | null => {
   if (!value || typeof value !== "object") {
     return null;
   }
 
-  const candidate = value as Partial<GameSettings> & { steps?: unknown };
+  const candidate = value as Partial<GameSettings>;
   if (!Array.isArray(candidate.methods)) {
     return null;
   }
@@ -60,18 +67,18 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
     return null;
   }
 
-  const actions = isFiniteNumber(candidate.actions)
-    ? candidate.actions
-    : isFiniteNumber(candidate.steps)
-      ? candidate.steps
-      : null;
+  const actions = asFiniteNumber(candidate.actions);
+  const questionCount = asFiniteNumber(candidate.questionCount);
+  const min = asFiniteNumber(candidate.min);
+  const max = asFiniteNumber(candidate.max);
+  const timeoutSeconds = asFiniteNumber(candidate.timeoutSeconds);
 
   if (
     actions === null ||
-    !isFiniteNumber(candidate.questionCount) ||
-    !isFiniteNumber(candidate.min) ||
-    !isFiniteNumber(candidate.max) ||
-    !isFiniteNumber(candidate.timeoutSeconds) ||
+    questionCount === null ||
+    min === null ||
+    max === null ||
+    timeoutSeconds === null ||
     (candidate.targetSelectionMode !== "random" &&
       candidate.targetSelectionMode !== "sequential")
   ) {
@@ -80,11 +87,11 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
 
   return {
     methods,
-    actions,
-    questionCount: candidate.questionCount,
-    min: candidate.min,
-    max: candidate.max,
-    timeoutSeconds: candidate.timeoutSeconds,
+    actions: clamp(actions, ACTIONS_MIN, ACTIONS_MAX),
+    questionCount: clamp(questionCount, 1, 20),
+    min,
+    max,
+    timeoutSeconds: Math.max(1, timeoutSeconds),
     targetSelectionMode: candidate.targetSelectionMode,
   };
 };
@@ -232,10 +239,10 @@ const App = () => {
     setPlayPhase("running");
   }, [settings.timeoutSeconds]);
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
     const normalized: GameSettings = {
       ...settings,
-      actions: Math.max(1, Math.min(3, settings.actions)),
+      actions: clamp(settings.actions, ACTIONS_MIN, ACTIONS_MAX),
       questionCount: Math.max(1, Math.min(20, settings.questionCount)),
       timeoutSeconds: Math.max(1, settings.timeoutSeconds),
     };
@@ -260,7 +267,7 @@ const App = () => {
 
     setMode("PLAY");
     setPlayPhase("running");
-  };
+  }, [settings]);
 
   const handleNext = useCallback(() => {
     if (mode !== "PLAY" || playPhase !== "reveal") {

@@ -25,6 +25,12 @@ export interface GameSettings {
 
 const maxAttempts = 100;
 
+const assertValidActions = (actions: number): void => {
+  if (!Number.isFinite(actions) || actions < 1 || actions > 5) {
+    throw new Error(`Invalid actions value: ${actions}. Expected a finite number in range 1..5.`);
+  }
+};
+
 const safeDivisor = (min: number, max: number): number => {
   let divisor = 0;
   let attempts = 0;
@@ -38,6 +44,10 @@ const safeDivisor = (min: number, max: number): number => {
 };
 
 export const generateQuestions = (settings: GameSettings): GeneratedQuestion[] => {
+  if (import.meta.env.DEV) {
+    assertValidActions(settings.actions);
+  }
+
   const questions: GeneratedQuestion[] = [];
 
   for (let questionId = 1; questionId <= settings.questionCount; questionId += 1) {
