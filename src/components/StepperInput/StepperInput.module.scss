@@ -1,0 +1,57 @@
+.field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #283048;
+}
+
+.control {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  border: 1px solid #cfd8f6;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+
+  &:focus-within {
+    border-color: #4d67e7;
+    box-shadow: 0 0 0 3px rgba(77, 103, 231, 0.2);
+  }
+}
+
+.stepButton {
+  border-radius: 0;
+  min-height: 44px;
+  padding: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #2b3f98;
+  background: #eef2ff;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.input {
+  border: none;
+  text-align: center;
+  min-height: 44px;
+  width: 100%;
+  padding: 0 0.4rem;
+  outline: none;
+}
+
+.helper {
+  margin: 0;
+  color: #67708f;
+  font-size: 0.78rem;
+}
