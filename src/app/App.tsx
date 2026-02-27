@@ -22,7 +22,7 @@ const STORAGE_KEY = "simple-math-settings";
 
 const defaultSettings: GameSettings = {
   methods: ["plus", "subtract", "multiply", "divide"],
-  steps: 2,
+  actions: 2,
   questionCount: 5,
   min: 1,
   max: 5,
@@ -45,7 +45,7 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
     return null;
   }
 
-  const candidate = value as Partial<GameSettings>;
+  const candidate = value as Partial<GameSettings> & { steps?: unknown };
   if (!Array.isArray(candidate.methods)) {
     return null;
   }
@@ -60,8 +60,14 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
     return null;
   }
 
+  const actions = isFiniteNumber(candidate.actions)
+    ? candidate.actions
+    : isFiniteNumber(candidate.steps)
+      ? candidate.steps
+      : null;
+
   if (
-    !isFiniteNumber(candidate.steps) ||
+    actions === null ||
     !isFiniteNumber(candidate.questionCount) ||
     !isFiniteNumber(candidate.min) ||
     !isFiniteNumber(candidate.max) ||
@@ -74,7 +80,7 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
 
   return {
     methods,
-    steps: candidate.steps,
+    actions,
     questionCount: candidate.questionCount,
     min: candidate.min,
     max: candidate.max,
@@ -229,7 +235,7 @@ const App = () => {
   const handleStart = () => {
     const normalized: GameSettings = {
       ...settings,
-      steps: Math.max(1, Math.min(3, settings.steps)),
+      actions: Math.max(1, Math.min(3, settings.actions)),
       questionCount: Math.max(1, Math.min(20, settings.questionCount)),
       timeoutSeconds: Math.max(1, settings.timeoutSeconds),
     };

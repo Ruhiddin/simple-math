@@ -47,7 +47,7 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
       <div className={styles.grid}>
         <label>
           {t('settings.steps')}
-          <input type="number" min={1} max={3} value={settings.steps} onChange={(e) => updateNumber('steps', Number(e.target.value))} />
+          <input type="number" min={1} max={3} value={settings.actions} onChange={(e) => updateNumber('actions', Number(e.target.value))} />
         </label>
         <label>
           {t('settings.questions')}
