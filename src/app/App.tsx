@@ -18,6 +18,7 @@ import styles from "./App.module.scss";
 
 type Mode = "SETUP" | "PLAY" | "RESULTS";
 type PlayPhase = "running" | "reveal";
+const STORAGE_KEY = "simple-math-settings";
 
 const defaultSettings: GameSettings = {
   methods: ["plus", "subtract", "multiply", "divide"],
@@ -27,6 +28,73 @@ const defaultSettings: GameSettings = {
   max: 5,
   timeoutSeconds: 7,
   targetSelectionMode: "random",
+};
+
+const validMethods: GameSettings["methods"] = [
+  "plus",
+  "subtract",
+  "multiply",
+  "divide",
+];
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const validateStoredSettings = (value: unknown): GameSettings | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Partial<GameSettings>;
+  if (!Array.isArray(candidate.methods)) {
+    return null;
+  }
+
+  const methods = candidate.methods.filter(
+    (method): method is GameSettings["methods"][number] =>
+      typeof method === "string" &&
+      validMethods.includes(method as GameSettings["methods"][number]),
+  );
+
+  if (methods.length === 0) {
+    return null;
+  }
+
+  if (
+    !isFiniteNumber(candidate.steps) ||
+    !isFiniteNumber(candidate.questionCount) ||
+    !isFiniteNumber(candidate.min) ||
+    !isFiniteNumber(candidate.max) ||
+    !isFiniteNumber(candidate.timeoutSeconds) ||
+    (candidate.targetSelectionMode !== "random" &&
+      candidate.targetSelectionMode !== "sequential")
+  ) {
+    return null;
+  }
+
+  return {
+    methods,
+    steps: candidate.steps,
+    questionCount: candidate.questionCount,
+    min: candidate.min,
+    max: candidate.max,
+    timeoutSeconds: candidate.timeoutSeconds,
+    targetSelectionMode: candidate.targetSelectionMode,
+  };
+};
+
+const getInitialSettings = (): GameSettings => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return defaultSettings;
+    }
+
+    const parsed = JSON.parse(raw);
+    return validateStoredSettings(parsed) ?? defaultSettings;
+  } catch {
+    return defaultSettings;
+  }
 };
 
 const pickNextTarget = (
@@ -49,7 +117,7 @@ const pickNextTarget = (
 
 const App = () => {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<GameSettings>(defaultSettings);
+  const [settings, setSettings] = useState<GameSettings>(getInitialSettings);
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
   const [mode, setMode] = useState<Mode>("SETUP");
   const [playPhase, setPlayPhase] = useState<PlayPhase>("running");
@@ -84,6 +152,10 @@ const App = () => {
   useEffect(() => {
     playPhaseRef.current = playPhase;
   }, [playPhase]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
 
   useEffect(() => {
     revealedRoundRef.current = null;
