@@ -47,6 +47,8 @@ const asFiniteNumber = (value: unknown): number | null => {
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
 
+const toInteger = (value: number): number => Math.trunc(value);
+
 const validateStoredSettings = (value: unknown): GameSettings | null => {
   if (!value || typeof value !== "object") {
     return null;
@@ -87,11 +89,11 @@ const validateStoredSettings = (value: unknown): GameSettings | null => {
 
   return {
     methods,
-    actions: clamp(actions, ACTIONS_MIN, ACTIONS_MAX),
-    questionCount: clamp(questionCount, 1, 20),
-    min,
-    max,
-    timeoutSeconds: Math.max(1, timeoutSeconds),
+    actions: clamp(toInteger(actions), ACTIONS_MIN, ACTIONS_MAX),
+    questionCount: clamp(toInteger(questionCount), 1, 20),
+    min: toInteger(min),
+    max: toInteger(max),
+    timeoutSeconds: Math.max(1, toInteger(timeoutSeconds)),
     targetSelectionMode: candidate.targetSelectionMode,
   };
 };
@@ -149,6 +151,10 @@ const App = () => {
   const modeRef = useRef(mode);
   const playPhaseRef = useRef(playPhase);
   const revealedRoundRef = useRef<number | null>(null);
+
+  const resetSettings = useCallback(() => {
+    setSettings(defaultSettings);
+  }, []);
 
   useEffect(() => {
     roundStepKeyRef.current = roundStepKey;
@@ -242,9 +248,11 @@ const App = () => {
   const handleStart = useCallback(() => {
     const normalized: GameSettings = {
       ...settings,
-      actions: clamp(settings.actions, ACTIONS_MIN, ACTIONS_MAX),
-      questionCount: Math.max(1, Math.min(20, settings.questionCount)),
-      timeoutSeconds: Math.max(1, settings.timeoutSeconds),
+      actions: clamp(toInteger(settings.actions), ACTIONS_MIN, ACTIONS_MAX),
+      questionCount: Math.max(1, Math.min(20, toInteger(settings.questionCount))),
+      min: toInteger(settings.min),
+      max: toInteger(settings.max),
+      timeoutSeconds: Math.max(1, toInteger(settings.timeoutSeconds)),
     };
 
     const generated = generateQuestions(normalized);
@@ -369,6 +377,7 @@ const App = () => {
               settings={settings}
               onChange={setSettings}
               onStart={handleStart}
+              onReset={resetSettings}
             />
           )}
 

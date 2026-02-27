@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import type { GameSettings } from '../../utils/questionGenerator';
 import type { Operator } from '../../utils/evaluateExpression';
+import StepperInput from '../StepperInput/StepperInput';
 import styles from './SettingsPanel.module.scss';
 
 interface SettingsPanelProps {
   settings: GameSettings;
   onChange: (settings: GameSettings) => void;
   onStart: () => void;
+  onReset: () => void;
 }
 
 const methods: { key: string; value: Operator }[] = [
@@ -16,31 +18,8 @@ const methods: { key: string; value: Operator }[] = [
   { key: 'divide', value: 'divide' },
 ];
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.max(min, Math.min(max, value));
-
-const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
+const SettingsPanel = ({ settings, onChange, onStart, onReset }: SettingsPanelProps) => {
   const { t } = useTranslation();
-
-  const updateNumber = (
-    key: keyof Omit<GameSettings, 'methods' | 'targetSelectionMode'>,
-    rawValue: number,
-  ) => {
-    if (!Number.isFinite(rawValue)) {
-      return;
-    }
-
-    const nextValue =
-      key === 'actions'
-        ? clamp(rawValue, 1, 5)
-        : key === 'questionCount'
-          ? clamp(rawValue, 1, 20)
-          : key === 'timeoutSeconds'
-            ? Math.max(1, rawValue)
-            : rawValue;
-
-    onChange({ ...settings, [key]: nextValue });
-  };
 
   const toggleMethod = (method: Operator) => {
     const exists = settings.methods.includes(method);
@@ -51,64 +30,101 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
   return (
     <section className={styles.settings}>
       <h2>{t('settings.title')}</h2>
-      <div className={styles.methods}>
-        {methods.map((method) => (
-          <label key={method.value}>
-            <input
-              type="checkbox"
-              checked={settings.methods.includes(method.value)}
-              onChange={() => toggleMethod(method.value)}
+
+      <div className={styles.sections}>
+        <section className={styles.section}>
+          <h3>{t('settings.operations')}</h3>
+          <div className={styles.methodPills} role="group" aria-label={t('settings.operations')}>
+            {methods.map((method) => {
+              const active = settings.methods.includes(method.value);
+
+              return (
+                <button
+                  type="button"
+                  key={method.value}
+                  className={`${styles.methodPill} ${active ? styles.active : ''}`}
+                  onClick={() => toggleMethod(method.value)}
+                  aria-pressed={active}
+                >
+                  {t(`settings.methods.${method.key}`)}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h3>{t('settings.questionSetup')}</h3>
+          <div className={styles.inputGrid}>
+            <StepperInput
+              label={t('settings.steps')}
+              value={settings.actions}
+              min={1}
+              max={5}
+              onChange={(value) => onChange({ ...settings, actions: value })}
             />
-            {t(`settings.methods.${method.key}`)}
-          </label>
-        ))}
+            <StepperInput
+              label={t('settings.questions')}
+              value={settings.questionCount}
+              min={1}
+              max={20}
+              onChange={(value) => onChange({ ...settings, questionCount: value })}
+            />
+            <label className={styles.selectField}>
+              <span>{t('settings.targetSelection')}</span>
+              <select
+                value={settings.targetSelectionMode}
+                onChange={(e) => onChange({ ...settings, targetSelectionMode: e.target.value as GameSettings['targetSelectionMode'] })}
+              >
+                <option value="random">{t('settings.random')}</option>
+                <option value="sequential">{t('settings.sequential')}</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h3>{t('settings.numberRange')}</h3>
+          <div className={styles.inputGrid}>
+            <StepperInput
+              label={t('settings.rangeMin')}
+              value={settings.min}
+              min={-50}
+              max={50}
+              onChange={(value) => onChange({ ...settings, min: value })}
+            />
+            <StepperInput
+              label={t('settings.rangeMax')}
+              value={settings.max}
+              min={-50}
+              max={50}
+              onChange={(value) => onChange({ ...settings, max: value })}
+            />
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h3>{t('settings.timer')}</h3>
+          <div className={styles.inputGrid}>
+            <StepperInput
+              label={t('settings.timeout')}
+              value={settings.timeoutSeconds}
+              min={1}
+              max={120}
+              onChange={(value) => onChange({ ...settings, timeoutSeconds: value })}
+            />
+          </div>
+        </section>
       </div>
-      <div className={styles.grid}>
-        <label>
-          {t('settings.steps')}
-          <input type="number" min={1} max={5} value={settings.actions} onChange={(e) => updateNumber('actions', Number(e.target.value))} />
-        </label>
-        <label>
-          {t('settings.questions')}
-          <input
-            type="number"
-            min={1}
-            max={20}
-            value={settings.questionCount}
-            onChange={(e) => updateNumber('questionCount', Number(e.target.value))}
-          />
-        </label>
-        <label>
-          {t('settings.rangeMin')}
-          <input type="number" value={settings.min} onChange={(e) => updateNumber('min', Number(e.target.value))} />
-        </label>
-        <label>
-          {t('settings.rangeMax')}
-          <input type="number" value={settings.max} onChange={(e) => updateNumber('max', Number(e.target.value))} />
-        </label>
-        <label>
-          {t('settings.timeout')}
-          <input
-            type="number"
-            min={1}
-            value={settings.timeoutSeconds}
-            onChange={(e) => updateNumber('timeoutSeconds', Number(e.target.value))}
-          />
-        </label>
-        <label>
-          {t('settings.targetSelection')}
-          <select
-            value={settings.targetSelectionMode}
-            onChange={(e) => onChange({ ...settings, targetSelectionMode: e.target.value as GameSettings['targetSelectionMode'] })}
-          >
-            <option value="random">{t('settings.random')}</option>
-            <option value="sequential">{t('settings.sequential')}</option>
-          </select>
-        </label>
+
+      <div className={styles.actions}>
+        <button type="button" className={styles.reset} onClick={onReset}>
+          {t('settings.reset')}
+        </button>
+        <button type="button" className={styles.start} onClick={onStart}>
+          {t('settings.start')}
+        </button>
       </div>
-      <button type="button" className={styles.start} onClick={onStart}>
-        {t('settings.start')}
-      </button>
     </section>
   );
 };
