@@ -16,11 +16,30 @@ const methods: { key: string; value: Operator }[] = [
   { key: 'divide', value: 'divide' },
 ];
 
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
+
 const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
   const { t } = useTranslation();
 
-  const updateNumber = (key: keyof Omit<GameSettings, 'methods' | 'targetSelectionMode'>, value: number) => {
-    onChange({ ...settings, [key]: value });
+  const updateNumber = (
+    key: keyof Omit<GameSettings, 'methods' | 'targetSelectionMode'>,
+    rawValue: number,
+  ) => {
+    if (!Number.isFinite(rawValue)) {
+      return;
+    }
+
+    const nextValue =
+      key === 'actions'
+        ? clamp(rawValue, 1, 5)
+        : key === 'questionCount'
+          ? clamp(rawValue, 1, 20)
+          : key === 'timeoutSeconds'
+            ? Math.max(1, rawValue)
+            : rawValue;
+
+    onChange({ ...settings, [key]: nextValue });
   };
 
   const toggleMethod = (method: Operator) => {
@@ -47,7 +66,7 @@ const SettingsPanel = ({ settings, onChange, onStart }: SettingsPanelProps) => {
       <div className={styles.grid}>
         <label>
           {t('settings.steps')}
-          <input type="number" min={1} max={3} value={settings.actions} onChange={(e) => updateNumber('actions', Number(e.target.value))} />
+          <input type="number" min={1} max={5} value={settings.actions} onChange={(e) => updateNumber('actions', Number(e.target.value))} />
         </label>
         <label>
           {t('settings.questions')}
